@@ -1,68 +1,45 @@
 import XCTest
 @testable import SynchronousTesting
 
-class WorkerTests: XCTestCase {
+class MessageLoaderTests: XCTestCase {
     
-    var sut: Worker!
+    var sut: MessageLoader!
     
     override func setUp() {
         super.setUp()
-        sut = Worker(queue:.global())
+        print(">>> Staring a test")
+        sut = MessageLoader()
     }
     
     override func tearDown() {
         sut = nil
         super.tearDown()
+        print(">>> Finished a test")
     }
     
-    func testDoStuffCallsCompletionHander() {
-        let expectation = XCTestExpectation(description: "should call completion handler")
-        sut.doStuff {
-            expectation.fulfill()
+    func testAtLeast1MessageOnLoad() {
+        
+        //Arrange
+        print(#function, "Arrange - main thread")
+        var messages: [Message] = []
+        
+        let background = SyncQueue.background
+        let main = SyncQueue.global
+        
+        sut.main = main
+        sut.background = background
+        
+        //Act
+        print(#function, "Act - main thread")
+        
+        sut.load { fetched in
+            print(#function, "callback on global thread")
+            messages = fetched
+            print(messages)
         }
-        wait(for: [expectation], timeout: 1.1)
-    }
-}
-
-class DispatchingWorkerTests: XCTestCase {
-    
-    var sut: DispatchingWorker!
-    
-    override func setUp() {
-        super.setUp()
-        sut = DispatchingWorker(queue: SyncQueue.background)
-    }
-    
-    override func tearDown() {
-        sut = nil
-        super.tearDown()
-    }
-    
-    func testDoStuffCallsCompletionHander() {
-        sut.doStuff {
-            XCTFail("Just kidding 😎! If you see this failure it means that the test was executed synchronously and this approach works as desired!")
-        }
-    }
-}
-
-
-class BackgroundToMainDispatchingWorkerTests: XCTestCase {
-    typealias Worker = BackgroundToMainDispatchingWorker
-    var sut: Worker!
-    
-    override func setUp() {
-        super.setUp()
-        sut = Worker(main: SyncQueue.global, background: SyncQueue.background)
-    }
-    
-    override func tearDown() {
-        sut = nil
-        super.tearDown()
-    }
-    
-    func testDoStuffCallsCompletionHander() {
-        sut.doStuff {
-            XCTFail("Just kidding 😎! If you see this failure it means that the test was executed synchronously and this approach works as desired!")
-        }
+        
+        //Assert
+        print(#function, "Assert - main thread")
+        XCTAssertFalse(messages.isEmpty, "Messages should not be empty")
     }
 }
