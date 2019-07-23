@@ -24,7 +24,7 @@ class MessageLoaderTests: XCTestCase {
         var messages: [Message] = []
         
         let background = SyncQueue.background
-        let main = SyncQueue.global
+        let main = SyncQueue.stubbedMain
         
         sut.main = main
         sut.background = background
